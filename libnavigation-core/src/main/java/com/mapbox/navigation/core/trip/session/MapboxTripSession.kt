@@ -75,9 +75,7 @@ internal class MapboxTripSession(
                 navigator.setRoute(value)?.let {
                     routeAlerts = it.routeAlerts
                 }
-                if (state == TripSessionState.STARTED) {
-                    updateDataFromNavigatorStatus()
-                }
+                updateDataFromNavigatorStatus()
             }
             isOffRoute = false
         }
@@ -475,6 +473,8 @@ internal class MapboxTripSession(
 
     private fun updateRawLocation(rawLocation: Location) {
         unconditionalStatusPollingJob?.cancel()
+        if (state != TripSessionState.STARTED) return
+
         this.rawLocation = rawLocation
         locationObservers.forEach { it.onRawLocationChanged(rawLocation) }
         mainJobController.scope.launch {
@@ -495,6 +495,8 @@ internal class MapboxTripSession(
 
     private fun updateDataFromNavigatorStatus() {
         val updateNavigatorStatusDataJob = mainJobController.scope.launch {
+            if (state != TripSessionState.STARTED) return@launch
+
             val status = getNavigatorStatus()
             if (!isActive) {
                 return@launch
